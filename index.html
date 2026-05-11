@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SAP Data Viewer</title>
+    <link
+      rel="shortcut icon"
+      href="./assets/cloud-icon.png"
+      type="image/x-icon"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #f5f5f5;
+        color: #000;
+        min-height: 100vh;
+        padding: 1rem;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #fff;
+        border: 2px solid #000;
+        box-shadow: 4px 4px 0px #000;
+      }
+      header {
+        background: #000;
+        color: #fff;
+        padding: 1.5rem;
+        text-align: center;
+        border-bottom: 2px solid #000;
+      }
+      h1 {
+        font-size: 1.5rem;
+        text-transform: uppercase;
+      }
+      .content {
+        padding: 1rem;
+      }
+      .controls {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+      }
+
+      button {
+        padding: 0.75rem 1.5rem;
+        background: #28a745;
+        color: #fff;
+        border: 2px solid #000;
+        font-size: 1rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 4px 4px 0px #000;
+        transition: all 0.1s;
+        width: 100%;
+        max-width: 300px;
+      }
+      button:hover {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0px #000;
+      }
+
+      .btn-action {
+        background: #000;
+        color: #fff;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+
+      .status {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 2px solid #000;
+        display: none;
+        font-weight: bold;
+        text-align: center;
+      }
+      .status.show {
+        display: block;
+      }
+      .status.success {
+        background: #28a745;
+        color: #fff;
+      } /* Grün */
+      .status.error {
+        background: #ff4d4d;
+        color: #fff;
+      } /* Hellrot */
+      .status.info {
+        background: #fff;
+        color: #000;
+      }
+
+      /* Responsive Table to Cards */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 2px solid #000;
+      }
+      th {
+        background: #000;
+        color: #fff;
+        padding: 1rem;
+        text-align: left;
+        text-transform: uppercase;
+      }
+      td {
+        padding: 1rem;
+        border-bottom: 1px solid #000;
+        border-right: 1px solid #ccc;
+      }
+
+      @media (max-width: 768px) {
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+        thead tr {
+          display: none;
+        } /* Verstecke Kopfzeile auf Handys */
+        tr {
+          border: 2px solid #000;
+          margin-bottom: 1rem;
+          background: #fff;
+          box-shadow: 4px 4px 0px #000;
+        }
+        td {
+          border: none;
+          border-bottom: 1px solid #eee;
+          position: relative;
+          padding-left: 50%;
+          text-align: left;
+        }
+        td::before {
+          content: attr(data-label);
+          position: absolute;
+          left: 1rem;
+          width: 45%;
+          font-weight: bold;
+          text-transform: uppercase;
+          color: #000;
+        }
+        select {
+          background: #fff;
+          border: 2px solid #000 !important;
+          font-family: inherit;
+          font-size: 1rem;
+          padding: 0.5rem;
+          box-shadow: 2px 2px 0px #000;
+        }
+      }
+      select {
+        background: #fff;
+        border: 2px solid #000 !important;
+        font-family: inherit;
+        font-size: 1rem;
+        padding: 0.5rem;
+        box-shadow: 2px 2px 0px #000;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>SAP Order Dashboard</h1>
+        <p class="subtitle">Klare Übersicht. Direkte Kontrolle.</p>
+      </header>
+
+      <div class="content">
+        <div class="controls">
+          <button id="fetchBtn">Daten laden</button>
+          <button
+            onclick="showForm()"
+            style="margin-left: 1rem; background: #007bff"
+          >
+            Neu anlegen
+          </button>
+        </div>
+
+        <div
+          id="orderForm"
+          style="
+            display: none;
+            padding: 1rem;
+            border: 2px solid #000;
+            margin-bottom: 1rem;
+            background: #fff;
+          "
+        >
+          <h3 style="margin-bottom: 1rem">Bestellung erfassen</h3>
+
+          <!-- Header Daten -->
+          <input
+            type="text"
+            id="inputCustomer"
+            placeholder="CustomerID"
+            style="padding: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem"
+          />
+          <select
+            id="inputCurrency"
+            style="
+              padding: 0.5rem;
+              margin-right: 0.5rem;
+              border: 1px solid #ccc;
+            "
+          >
+            <option value="CHF">CHF (Schweizer Franken)</option>
+            <option value="EUR">EUR (Euro)</option>
+            <option value="TRY">TRY (Türkische Lira)</option>
+            <option value="USD">USD (US-Dollar)</option>
+          </select>
+
+          <br />
+
+          <!-- Item Daten (Produkt und Menge) -->
+          <select
+            id="inputMatId"
+            style="
+              padding: 0.5rem;
+              margin-right: 0.5rem;
+              margin-top: 0.5rem;
+              border: 1px solid #ccc;
+            "
+          >
+            <option value="STUHL-ERGO">Ergonomischer Bürostuhl</option>
+            <option value="STUHL-HOLZ">Klassischer Holzstuhl</option>
+            <option value="STUHL-LEDR">Chef-Lederstuhl</option>
+            <option value="STUHL-KLAP">Klappstuhl einfach</option>
+            <option value="STUHL-GART">Gartenstuhl wetterfest</option>
+            <option value="STUHL-BAR">Barhocker</option>
+          </select>
+          <input
+            type="number"
+            id="inputQuantity"
+            placeholder="Menge (z.B. 10)"
+            style="padding: 0.5rem; margin-right: 0.5rem; margin-top: 0.5rem"
+          />
+
+          <input type="hidden" id="inputUUID" />
+          <br />
+          <button onclick="saveOrder()" style="width: auto; margin-top: 1rem">
+            Speichern
+          </button>
+          <button
+            onclick="cancelForm()"
+            style="width: auto; margin-top: 1rem; background: #ccc; color: #000"
+          >
+            Abbrechen
+          </button>
+        </div>
+        <div id="status" class="status"></div>
+        <div id="results"></div>
+      </div>
+
+      <hr style="margin-top: 3rem; border: 1px solid #ccc" />
+      <h2 style="font-family: sans-serif; color: #333">
+        📦 Aktueller Lagerbestand
+      </h2>
+
+      <!-- Hier nutzen wir CSS Grid für eine perfekte, responsive Anordnung -->
+      <div
+        id="stockList"
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 1.5rem;
+          margin-top: 1rem;
+        "
+      ></div>
+    </div>
+
+    <script>
+      const fetchBtn = document.getElementById("fetchBtn");
+      const statusDiv = document.getElementById("status");
+      const resultsDiv = document.getElementById("results");
+
+      function showStatus(message, type) {
+        statusDiv.textContent = message;
+        statusDiv.className = `status show ${type}`;
+      }
+
+      // Funktion zum Auslösen der Action
+      async function triggerStatusChange(orderId) {
+        showStatus("Ändere Status...", "info");
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/changeStatus/${orderId}`,
+            {
+              method: "POST",
+            },
+          );
+          const result = await response.json();
+
+          if (!result.success) throw new Error(result.error);
+
+          showStatus("Status erfolgreich geändert!", "success");
+          fetchData(); // Tabelle neu laden, um den neuen Status ('O' oder 'C') zu sehen
+        } catch (error) {
+          showStatus(`Fehler beim Ändern: ${error.message}`, "error");
+        }
+      }
+
+      async function fetchData() {
+        fetchBtn.disabled = true;
+        showStatus("Lade Daten...", "info");
+        resultsDiv.innerHTML = "";
+
+        try {
+          const response = await fetch("http://localhost:3000/api/data");
+          if (!response.ok) throw new Error(`Server error: ${response.status}`);
+          const result = await response.json();
+          if (!result.success)
+            throw new Error(result.error || "Fehler beim Laden");
+
+          let data = result.data.value || result.data;
+          if (!Array.isArray(data)) data = [data];
+
+          data.sort((a, b) => {
+            return new Date(b.CreatedAt) - new Date(a.CreatedAt);
+          });
+
+          if (data.length === 0) {
+            showStatus("Keine Daten gefunden.", "info");
+            return;
+          }
+
+          showStatus(`${data.length} Bestellungen geladen.`, "success");
+
+          // const keys = Object.keys(data[0]);
+          const keys = [
+            "OrderID",
+            "CustomerID",
+            "OrderDate",
+            "TotalPrice",
+            "CurrencyCode",
+            "OverallStatus",
+          ];
+          let html = "<table><thead><tr>";
+
+          // Tabellenkopf
+          keys.forEach((key) => (html += `<th>${key}</th>`));
+          html += `<th>Aktion</th></tr></thead><tbody>`;
+
+          // Tabellenkörper mit data-labels für Mobile
+          data.forEach((item) => {
+            html += "<tr>";
+            keys.forEach((key) => {
+              const value = item[key] !== null ? item[key] : "—";
+              html += `<td data-label="${key}">${value}</td>`;
+            });
+
+            if (item.OrderUUID) {
+              html += `<td data-label="Aktion">
+    <button class="btn-action" onclick="triggerStatusChange('${item.OrderUUID}')">Status</button>
+    <button class="btn-action" style="background:#007bff;" onclick="showForm('${item.OrderUUID}', '${item.CustomerID}', '${item.TotalPrice}', '${item.CurrencyCode}')">Edit</button>
+    <button class="btn-action" style="background:#ff4d4d;" onclick="deleteOrder('${item.OrderUUID}')">Löschen</button>
+  </td>`;
+            } else {
+              html += `<td data-label="Aktion">—</td>`;
+            }
+            html += "</tr>";
+          });
+
+          html += "</tbody></table>";
+          resultsDiv.innerHTML = html;
+        } catch (error) {
+          showStatus(`Fehler: ${error.message}`, "error");
+        } finally {
+          fetchBtn.disabled = false;
+        }
+      }
+      function showForm(uuid = "", customer = "", currency = "CHF") {
+        document.getElementById("orderForm").style.display = "block";
+        document.getElementById("inputUUID").value = uuid;
+        document.getElementById("inputCustomer").value = customer;
+        document.getElementById("inputCurrency").value = currency;
+        document.getElementById("inputQuantity").value = ""; // Feld leeren
+      }
+
+      async function saveOrder() {
+        const uuid = document.getElementById("inputUUID").value;
+        const matId = document.getElementById("inputMatId").value;
+        const quantity = parseInt(
+          document.getElementById("inputQuantity").value,
+        );
+
+        // Basis-Daten für den Header
+        const bodyData = {
+          CustomerID: document.getElementById("inputCustomer").value,
+          CurrencyCode: document.getElementById("inputCurrency").value,
+        };
+
+        // Wenn es eine neue Bestellung ist (keine UUID), senden wir das Item mit (Deep Insert)
+        if (!uuid) {
+          if (!quantity || quantity <= 0) {
+            showStatus("Bitte eine gültige Menge eingeben!", "error");
+            return;
+          }
+          // Name der Assoziation aus der SAP Metadaten. Meistens "_Items" oder "to_OrderItem"
+          bodyData._Items = [
+            {
+              MatId: matId,
+              Quantity: quantity,
+              Unit: "ST",
+            },
+          ];
+        }
+
+        const method = uuid ? "PATCH" : "POST";
+        const url = uuid
+          ? `http://localhost:3000/api/orders/${uuid}`
+          : "http://localhost:3000/api/orders";
+
+        showStatus("Speichere Daten...", "info");
+
+        try {
+          const response = await fetch(url, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(bodyData),
+          });
+          const result = await response.json();
+
+          if (!result.success) throw new Error(result.error);
+
+          showStatus(
+            "Erfolgreich gespeichert! SAP berechnet den Preis.",
+            "success",
+          );
+          cancelForm();
+          fetchData();
+        } catch (error) {
+          showStatus(`Fehler beim Speichern: ${error.message}`, "error");
+        }
+      }
+
+      function cancelForm() {
+        document.getElementById("orderForm").style.display = "none";
+      }
+
+      async function deleteOrder(uuid) {
+        if (!confirm("Willst du diese Bestellung wirklich löschen?")) return;
+
+        showStatus("Lösche Daten...", "info");
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/orders/${uuid}`,
+            {
+              method: "DELETE",
+            },
+          );
+          const result = await response.json();
+
+          if (!result.success) throw new Error(result.error);
+
+          showStatus("Erfolgreich gelöscht!", "success");
+          fetchData();
+        } catch (error) {
+          showStatus(`Fehler beim Löschen: ${error.message}`, "error");
+        }
+      }
+
+      async function fetchStock() {
+        try {
+          const response = await fetch("http://localhost:3000/api/stock");
+          const result = await response.json();
+
+          if (!result.success) throw new Error(result.error);
+
+          let data = result.data.value || result.data;
+          if (!Array.isArray(data)) data = [data];
+
+          let html = "";
+          data.forEach((item) => {
+            // Logik: Ist der Bestand zu tief?
+            const isLow = item.MengeAktuell <= item.Mindestbestand;
+
+            // Farben und Texte basierend auf dem Status
+            const statusColor = isLow ? "#ffebee" : "#e8f5e9"; // Helles Rot oder helles Grün
+            const borderColor = isLow ? "#d32f2f" : "#2e7d32"; // Dunkles Rot oder dunkles Grün
+            const statusText = isLow ? "⚠️ Nachbestellen" : "✅ Bestand OK";
+
+            // Die Karte (Card) im modernen Design mit harten Rändern (Neo-Brutalism)
+            html += `
+        <div style="background: #fff; border: 2px solid #111; border-radius: 8px; overflow: hidden; box-shadow: 4px 4px 0px #111; font-family: sans-serif; transition: transform 0.2s;">
+          <div style="background: #f8f9fa; border-bottom: 2px solid #111; padding: 1rem;">
+            <h3 style="margin: 0; font-size: 1.2rem; color: #111;">${item.MatId}</h3>
+          </div>
+          <div style="padding: 1rem;">
+            <!-- WICHTIG: Hier nutzen wir exakt EinheitPrice aus deinem CDS View -->
+            <p style="margin: 0.5rem 0; font-size: 1.1rem; color: #444;">Preis: <strong style="color: #000;">${item.EinheitPrice} CHF</strong></p>
+            
+            <div style="margin: 1rem 0; padding: 0.8rem; background: ${statusColor}; border: 1px solid ${borderColor}; border-radius: 4px;">
+              <p style="margin: 0; font-weight: bold; color: ${borderColor}; font-size: 0.9rem;">${statusText}</p>
+              <p style="margin: 0.5rem 0 0 0; font-size: 1.4rem; font-weight: bold; color: #111;">
+                ${item.MengeAktuell} <span style="font-size: 1rem; font-weight: normal; color: #555;">${item.Einheit}</span>
+              </p>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: #666; margin: 0;">Minimum: ${item.Mindestbestand} ${item.Einheit}</p>
+          </div>
+        </div>
+      `;
+          });
+
+          document.getElementById("stockList").innerHTML = html;
+        } catch (error) {
+          console.error("Fehler beim Laden des Lagers:", error);
+          document.getElementById("stockList").innerHTML =
+            `<div style="padding: 1rem; background: #ffebee; border: 2px solid #d32f2f; color: #d32f2f; border-radius: 8px;"><strong>Fehler:</strong> ${error.message}</div>`;
+        }
+      }
+
+      fetchBtn.addEventListener("click", () => {
+        fetchData();
+        fetchStock();
+      });
+      window.addEventListener("load", () =>
+        setTimeout(() => {
+          fetchData();
+          fetchStock();
+        }, 500),
+      );
+    </script>
+  </body>
+</html>
