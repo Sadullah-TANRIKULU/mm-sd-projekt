@@ -297,12 +297,9 @@
       async function triggerStatusChange(orderId) {
         showStatus("Ändere Status...", "info");
         try {
-          const response = await fetch(
-            `http://localhost:3000/api/changeStatus/${orderId}`,
-            {
-              method: "POST",
-            },
-          );
+          const response = await fetch(`/api/changeStatus/${orderId}`, {
+            method: "POST",
+          });
           const result = await response.json();
 
           if (!result.success) throw new Error(result.error);
@@ -320,7 +317,7 @@
         resultsDiv.innerHTML = "";
 
         try {
-          const response = await fetch("http://localhost:3000/api/data");
+          const response = await fetch("/api/data");
           if (!response.ok) throw new Error(`Server error: ${response.status}`);
           const result = await response.json();
           if (!result.success)
@@ -419,9 +416,7 @@
         }
 
         const method = uuid ? "PATCH" : "POST";
-        const url = uuid
-          ? `http://localhost:3000/api/orders/${uuid}`
-          : "http://localhost:3000/api/orders";
+        const url = uuid ? `/api/orders/${uuid}` : `/api/orders`;
 
         showStatus("Speichere Daten...", "info");
 
@@ -455,12 +450,9 @@
 
         showStatus("Lösche Daten...", "info");
         try {
-          const response = await fetch(
-            `http://localhost:3000/api/orders/${uuid}`,
-            {
-              method: "DELETE",
-            },
-          );
+          const response = await fetch(`/api/orders/${uuid}`, {
+            method: "DELETE",
+          });
           const result = await response.json();
 
           if (!result.success) throw new Error(result.error);
@@ -474,7 +466,7 @@
 
       async function fetchStock() {
         try {
-          const response = await fetch("http://localhost:3000/api/stock");
+          const response = await fetch("/api/stock");
           const result = await response.json();
 
           if (!result.success) throw new Error(result.error);
