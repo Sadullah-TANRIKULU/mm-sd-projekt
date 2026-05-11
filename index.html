@@ -518,6 +518,7 @@
           });
 
           document.getElementById("stockList").innerHTML = html;
+          fetchStock();
         } catch (error) {
           console.error("Fehler beim Laden des Lagers:", error);
           document.getElementById("stockList").innerHTML =
