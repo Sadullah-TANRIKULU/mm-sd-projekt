@@ -398,13 +398,11 @@
           document.getElementById("inputQuantity").value,
         );
 
-        // Basis-Daten für den Header
         const bodyData = {
           CustomerID: document.getElementById("inputCustomer").value,
           CurrencyCode: document.getElementById("inputCurrency").value,
         };
 
-        // Wenn es eine neue Bestellung ist (keine UUID), senden wir das Item mit (Deep Insert)
         if (!uuid) {
           if (!quantity || quantity <= 0) {
             showStatus("Bitte eine gültige Menge eingeben!", "error");

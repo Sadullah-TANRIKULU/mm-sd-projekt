@@ -334,7 +334,6 @@ app.get("/api/stock", async (req, res) => {
 
     const data = await response.json();
 
-    // SAP OData V4 packt die Listen oft in ein "value" Array
     const stockData = data.value || data;
 
     res.json({ success: true, data: stockData });
